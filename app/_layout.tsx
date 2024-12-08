@@ -24,7 +24,7 @@ const DARK_THEME: Theme = {
 }
 export {
 	// Catch any errors thrown by the Layout component.
-	ErrorBoundary,
+	ErrorBoundary
 } from 'expo-router'
 
 // Prevent the splash screen from auto-hiding before getting the color scheme.
@@ -35,7 +35,7 @@ export default function RootLayout() {
 	const [isColorSchemeLoaded, setIsColorSchemeLoaded] = React.useState(false)
 
 	React.useEffect(() => {
-		;(async () => {
+		; (async () => {
 			const theme = await AsyncStorage.getItem('theme')
 			if (Platform.OS === 'web') {
 				// Adds the background color to the html element to prevent white background on overscroll.
@@ -46,7 +46,7 @@ export default function RootLayout() {
 				setIsColorSchemeLoaded(true)
 				return
 			}
-			const colorTheme = theme === 'dark' ? 'dark' : 'light'
+			const colorTheme = theme !== 'dark' ? 'dark' : 'light'
 			if (colorTheme !== colorScheme) {
 				setColorScheme(colorTheme)
 

@@ -27,7 +27,13 @@
       "favicon": "./assets/icon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Drive Tracker to use your location."
+        }
+      ]
     ]
   }
 }

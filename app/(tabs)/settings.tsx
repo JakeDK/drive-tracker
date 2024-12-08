@@ -1,19 +1,71 @@
-import React from 'react'
-
-import { View, Text, Image } from 'react-native'
-import { Link } from 'expo-router'
+import { View, ScrollView, TouchableOpacity, Switch } from "react-native";
+import { Text } from "@/components/ui/text";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { router } from "expo-router";
+import { Plus, User2, MapPin, Clock } from "lucide-react-native";
+import { useEffect, useState } from "react";
+import { Client } from "@/types/client";
+import { StorageService } from "@/services/storage";
 
 export default function SettingsScreen() {
-	return (
-		<View className='flex-1 flex-col items-center justify-center px-4 h-screen'>
-			<Link href='/'>
-				<Image className='w-64 h-64 mb-4' source={require('assets/icon.png')} />
-			</Link>
-			<View className='flex-col gap-4 py-4'>
-				<Text className='text-center font-medium'>REACT: 18.3.1</Text>
-				<Text className='text-center font-medium'>REACT NATIVE: 0.76.3</Text>
-				<Text className='text-center font-medium'>GX TEMPLATE: 1.0.0</Text>
-			</View>
-		</View>
-	)
+  const [clients, setClients] = useState<Client[]>([]);
+
+  useEffect(() => {
+    loadClients();
+  }, []);
+
+  const loadClients = async () => {
+    const loadedClients = await StorageService.getClients();
+    setClients(loadedClients);
+  };
+
+  return (
+    <ScrollView className="flex-1 p-4 bg-background">
+      <View className="flex-row items-center justify-between mb-4">
+        <Text className="text-xl font-bold">Clients</Text>
+        <Button
+          variant="outline"
+          size="sm"
+          onPress={() => router.push("/client/new")}
+        >
+          <Plus size={16} className="mr-1" />
+          <Text>Add Client</Text>
+        </Button>
+      </View>
+
+      <View className="space-y-2">
+        {clients.map((client) => (
+          <TouchableOpacity
+            key={client.id}
+            onPress={() => router.push(`/client/${client.id}`)}
+          >
+            <Card className="p-4">
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center">
+                  <User2 size={20} className="mr-2 text-muted-foreground" />
+                  <View>
+                    <Text className="font-semibold">{client.name}</Text>
+                    <Text className="text-sm text-muted-foreground">
+                      {client.timeSlots.length} time slots
+                    </Text>
+                  </View>
+                </View>
+                <View className="flex-row items-center">
+                  <Switch
+                    value={client.isActive}
+                    onValueChange={async (value) => {
+                      const updatedClient = { ...client, isActive: value };
+                      await StorageService.saveClient(updatedClient);
+                      loadClients();
+                    }}
+                  />
+                </View>
+              </View>
+            </Card>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </ScrollView>
+  );
 }
