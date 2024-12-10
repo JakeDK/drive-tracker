@@ -19,9 +19,10 @@ export interface Trip {
   elevationGain: number;
 }
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   TRIPS: "drive_tracker_trips",
   CLIENTS: "drive_tracker_clients",
+  STATE: "drive_tracker_state",
 };
 
 export const StorageService = {
@@ -52,6 +53,16 @@ export const StorageService = {
     } catch (error) {
       console.error("Error getting trip:", error);
       return null;
+    }
+  },
+
+  async getState(): Promise<{ isTracking: boolean }> {
+    try {
+      const state = await AsyncStorage.getItem(STORAGE_KEYS.STATE);
+      return state ? JSON.parse(state) : { isTracking: false };
+    } catch (error) {
+      console.error("Error getting state:", error);
+      return { isTracking: false };
     }
   },
 
@@ -116,114 +127,5 @@ export const StorageService = {
     } catch (error) {
       console.error("Error deleting client:", error);
     }
-  },
-
-  async initializeDummyData(): Promise<void> {
-    const dummyTrips: Trip[] = [
-      {
-        id: "1",
-        startTime: Date.now() - 3600000, // 1 hour ago
-        endTime: Date.now(),
-        duration: 3600, // 1 hour in seconds
-        distance: 42.5,
-        category: "work",
-        coordinates: [
-          {
-            latitude: 55.6761,
-            longitude: 12.5683,
-            timestamp: Date.now() - 3600000,
-            speed: 45,
-            altitude: 10,
-          },
-          {
-            latitude: 55.6867,
-            longitude: 12.5876,
-            timestamp: Date.now() - 1800000,
-            speed: 52,
-            altitude: 12,
-          },
-          {
-            latitude: 55.6992,
-            longitude: 12.5919,
-            timestamp: Date.now(),
-            speed: 48,
-            altitude: 11,
-          },
-        ],
-        averageSpeed: 48.3,
-        maxSpeed: 52,
-        elevationGain: 2,
-      },
-      {
-        id: "2",
-        startTime: Date.now() - 86400000, // 24 hours ago
-        endTime: Date.now() - 82800000, // 23 hours ago
-        duration: 3600,
-        distance: 38.2,
-        category: "personal",
-        coordinates: [
-          {
-            latitude: 55.6761,
-            longitude: 12.5683,
-            timestamp: Date.now() - 86400000,
-            speed: 40,
-            altitude: 8,
-          },
-          {
-            latitude: 55.6867,
-            longitude: 12.5876,
-            timestamp: Date.now() - 84600000,
-            speed: 45,
-            altitude: 10,
-          },
-          {
-            latitude: 55.6992,
-            longitude: 12.5919,
-            timestamp: Date.now() - 82800000,
-            speed: 42,
-            altitude: 9,
-          },
-        ],
-        averageSpeed: 42.3,
-        maxSpeed: 45,
-        elevationGain: 2,
-      },
-      {
-        id: "3",
-        startTime: Date.now() - 172800000, // 48 hours ago
-        endTime: Date.now() - 169200000, // 47 hours ago
-        duration: 3600,
-        distance: 35.8,
-        category: "work",
-        coordinates: [
-          {
-            latitude: 55.6761,
-            longitude: 12.5683,
-            timestamp: Date.now() - 172800000,
-            speed: 38,
-            altitude: 7,
-          },
-          {
-            latitude: 55.6867,
-            longitude: 12.5876,
-            timestamp: Date.now() - 171000000,
-            speed: 42,
-            altitude: 9,
-          },
-          {
-            latitude: 55.6992,
-            longitude: 12.5919,
-            timestamp: Date.now() - 169200000,
-            speed: 40,
-            altitude: 8,
-          },
-        ],
-        averageSpeed: 40,
-        maxSpeed: 42,
-        elevationGain: 2,
-      },
-    ];
-
-    await AsyncStorage.setItem(STORAGE_KEYS.TRIPS, JSON.stringify(dummyTrips));
   },
 };

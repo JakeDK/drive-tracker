@@ -1,4 +1,4 @@
-# react-native-gx-template
+# Drive Tracker
 
 A template for building mobile applications with React Native using Expo, styled with NativeWind and components from Shadcn.
 

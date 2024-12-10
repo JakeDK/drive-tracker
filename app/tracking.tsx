@@ -6,21 +6,31 @@ import { Button } from "@/components/ui/button";
 import * as Location from "expo-location";
 import { MapComponent } from "@/components/tracking/map";
 import { Clock, Navigation2 } from "lucide-react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { STORAGE_KEYS, StorageService } from "@/services/storage";
 
 interface Coordinate {
   latitude: number;
   longitude: number;
   timestamp: number;
+  speed?: number | null;
+  altitude?: number | null;
 }
 
 export default function TrackingScreen() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [coordinates, setCoordinates] = useState<Coordinate[]>([]);
   const [distance, setDistance] = useState(0);
+  const [startTime] = useState(Date.now());
   let locationSubscription: Location.LocationSubscription | null = null;
 
   useEffect(() => {
     startTracking();
+    const setInitialState = async () => {
+      await AsyncStorage.setItem(STORAGE_KEYS.STATE, "true");
+    };
+    setInitialState();
+
     const timer = setInterval(() => {
       setElapsedTime((prev) => prev + 1);
     }, 1000);
@@ -46,10 +56,12 @@ export default function TrackingScreen() {
         distanceInterval: 10,
       },
       (location) => {
-        const newCoordinate = {
+        const newCoordinate: Coordinate = {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
           timestamp: location.timestamp,
+          speed: location.coords.speed,
+          altitude: location.coords.altitude,
         };
         setCoordinates((prev) => [...prev, newCoordinate]);
 
@@ -96,8 +108,46 @@ export default function TrackingScreen() {
     if (locationSubscription) {
       await locationSubscription.remove();
     }
-    // Here you would save the trip data
-    router.back();
+
+    // Calculate trip statistics
+    const speeds = coordinates
+      .map((coord) => coord.speed)
+      .filter(
+        (speed): speed is number => speed !== null && speed !== undefined
+      );
+
+    const maxSpeed = Math.max(...speeds);
+    const averageSpeed = speeds.reduce((a, b) => a + b, 0) / speeds.length;
+
+    // Calculate elevation gain if altitude data is available
+    let elevationGain = 0;
+    if (coordinates.length > 1) {
+      for (let i = 1; i < coordinates.length; i++) {
+        const prevAlt = coordinates[i - 1].altitude;
+        const currentAlt = coordinates[i].altitude;
+        if (prevAlt && currentAlt && currentAlt > prevAlt) {
+          elevationGain += currentAlt - prevAlt;
+        }
+      }
+    }
+
+    // Save trip data
+    const tripData = {
+      id: startTime.toString(),
+      startTime: startTime,
+      endTime: Date.now(),
+      duration: elapsedTime,
+      distance: distance,
+      coordinates: coordinates,
+      averageSpeed: averageSpeed,
+      maxSpeed: maxSpeed,
+      elevationGain: elevationGain,
+    };
+
+    await StorageService.saveTrip(tripData);
+    await AsyncStorage.setItem(STORAGE_KEYS.STATE, "false");
+
+    router.replace("/");
   };
 
   return (
@@ -107,39 +157,39 @@ export default function TrackingScreen() {
           title: "Tracking Active",
           headerRight: () => (
             <Button variant="destructive" size="sm" onPress={stopTracking}>
-              Stop
+              <Text>Stop</Text>
             </Button>
           ),
         }}
       />
 
-      <View className="flex-1">
-        {/* <MapComponent
-          location={
-            coordinates.length > 0
-              ? coordinates[coordinates.length - 1]
-              : undefined
-          }
-          route={coordinates}
-          className="flex-1"
-        /> */}
-
-        <View className="p-4 space-y-4 bg-background">
-          <View className="flex-row items-center justify-around">
-            <View className="items-center">
-              <Clock className="mb-2 text-muted-foreground" size={24} />
-              <Text className="text-2xl font-bold">
+      <View style={{ flex: 1 }}>
+        {/* Map Component would go here */}
+        <View style={{ padding: 16, gap: 16, backgroundColor: "background" }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-around",
+            }}
+          >
+            <View style={{ alignItems: "center" }}>
+              <Clock style={{ marginBottom: 8, color: "gray" }} size={24} />
+              <Text style={{ fontSize: 24, fontWeight: "bold" }}>
                 {formatTime(elapsedTime)}
               </Text>
-              <Text className="text-muted-foreground">Duration</Text>
+              <Text style={{ color: "gray" }}>Duration</Text>
             </View>
 
-            <View className="items-center">
-              <Navigation2 className="mb-2 text-muted-foreground" size={24} />
-              <Text className="text-2xl font-bold">
+            <View style={{ alignItems: "center" }}>
+              <Navigation2
+                style={{ marginBottom: 8, color: "gray" }}
+                size={24}
+              />
+              <Text style={{ fontSize: 24, fontWeight: "bold" }}>
                 {distance.toFixed(2)} km
               </Text>
-              <Text className="text-muted-foreground">Distance</Text>
+              <Text style={{ color: "gray" }}>Distance</Text>
             </View>
           </View>
         </View>

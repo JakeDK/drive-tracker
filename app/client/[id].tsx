@@ -39,7 +39,7 @@ export default function ClientScreen() {
 
   const handleSave = async () => {
     await StorageService.saveClient(client);
-    router.back();
+    router.replace("/settings");
   };
 
   const addTimeSlot = () => {
@@ -94,7 +94,7 @@ export default function ClientScreen() {
           style: "destructive",
           onPress: async () => {
             await StorageService.deleteClient(client.id);
-            router.back();
+            router.replace("/");
           },
         },
       ]
@@ -114,7 +114,7 @@ export default function ClientScreen() {
                 </Button>
               )}
               <Button variant="ghost" onPress={handleSave}>
-                Save
+                <Text>Save</Text>
               </Button>
             </View>
           ),
@@ -133,6 +133,7 @@ export default function ClientScreen() {
               }
             />
             <AddressSearch
+              value={client.address}
               onSelect={(address) =>
                 setClient((prev) => ({ ...prev, address }))
               }
@@ -188,7 +189,7 @@ export default function ClientScreen() {
                       className={slot.days.includes(index) ? "text-white" : ""}
                       onPress={() => toggleDay(slot.id, index)}
                     >
-                      {day}
+                      <Text>{day}</Text>
                     </Button>
                   ))}
                 </View>

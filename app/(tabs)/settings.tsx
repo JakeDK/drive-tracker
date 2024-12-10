@@ -36,12 +36,12 @@ export default function SettingsScreen() {
 
       <View className="space-y-2">
         {clients.map((client) => (
-          <TouchableOpacity
-            key={client.id}
-            onPress={() => router.push(`/client/${client.id}`)}
-          >
-            <Card className="p-4">
-              <View className="flex-row items-center justify-between">
+          <Card className="p-4" key={client.id}>
+            <View className="flex-row items-center justify-between">
+              <TouchableOpacity
+                key={client.id}
+                onPress={() => router.push(`/client/${client.id}`)}
+              >
                 <View className="flex-row items-center">
                   <User2 size={20} className="mr-2 text-muted-foreground" />
                   <View>
@@ -51,19 +51,20 @@ export default function SettingsScreen() {
                     </Text>
                   </View>
                 </View>
-                <View className="flex-row items-center">
-                  <Switch
-                    value={client.isActive}
-                    onValueChange={async (value) => {
-                      const updatedClient = { ...client, isActive: value };
-                      await StorageService.saveClient(updatedClient);
-                      loadClients();
-                    }}
-                  />
-                </View>
+              </TouchableOpacity>
+
+              <View className="flex-row items-center">
+                <Switch
+                  value={client.isActive}
+                  onValueChange={async (value) => {
+                    const updatedClient = { ...client, isActive: value };
+                    await StorageService.saveClient(updatedClient);
+                    loadClients();
+                  }}
+                />
               </View>
-            </Card>
-          </TouchableOpacity>
+            </View>
+          </Card>
         ))}
       </View>
     </ScrollView>

@@ -18,9 +18,10 @@ interface Address {
 
 interface AddressSearchProps {
   onSelect: (address: string) => void;
+  value?: string;
 }
 
-export function AddressSearch({ onSelect }: AddressSearchProps) {
+export function AddressSearch({ onSelect, value }: AddressSearchProps) {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Address[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,14 +54,17 @@ export function AddressSearch({ onSelect }: AddressSearchProps) {
     onSelect(address.tekst);
   };
 
+  const handleTextChange = (text: string) => {
+    setQuery(text);
+    searchAddress(text);
+    onSelect(text); // Update parent with intermediate values
+  };
+
   return (
     <View className="relative">
       <Input
-        value={query}
-        onChangeText={(text) => {
-          setQuery(text);
-          searchAddress(text);
-        }}
+        value={value || query} // Show external value if provided
+        onChangeText={handleTextChange}
         placeholder="Search address..."
       />
 

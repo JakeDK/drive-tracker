@@ -7,7 +7,8 @@ import * as Location from "expo-location";
 import { MapPin, Clock, Navigation2, Calendar } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { router } from "expo-router";
-import { StorageService, Trip } from "@/services/storage";
+import { STORAGE_KEYS, StorageService, Trip } from "@/services/storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function TabOneScreen() {
   const [isTracking, setIsTracking] = useState(false);
@@ -20,6 +21,17 @@ export default function TabOneScreen() {
 
   useEffect(() => {
     loadTrips();
+
+    const checkTrackingState = async () => {
+      const isTracking = (await StorageService.getState()).isTracking;
+      setIsTracking(isTracking || false);
+      loadTrips();
+    };
+
+    checkTrackingState();
+    const interval = setInterval(checkTrackingState, 1000); // Check every second
+
+    return () => clearInterval(interval);
   }, []);
 
   const loadTrips = async () => {
@@ -35,65 +47,27 @@ export default function TabOneScreen() {
     return new Date(timestamp).toLocaleTimeString();
   };
 
-  const toggleTracking = () => {
-    setIsTracking(!isTracking);
+  const startTracking = () => {
+    router.push("/tracking");
   };
 
-  const initializeDummyData = async () => {
-    await StorageService.initializeDummyData();
-    loadTrips(); // Reload the trips after initializing dummy data
+  const stopTracking = async () => {
+    await AsyncStorage.setItem(STORAGE_KEYS.STATE, "false");
+    loadTrips();
   };
-
-  useEffect(() => {
-    initializeDummyData();
-  }, []);
 
   return (
     <ScrollView className="flex-1 bg-background">
-      {/* Map Placeholder for Web */}
-      {/* <View className="items-center justify-center w-full bg-gray-100 h-96">
-        <Text className="text-gray-500">
-          <MapComponent
-            location={
-              location
-                ? {
-                    latitude: location.coords.latitude,
-                    longitude: location.coords.longitude,
-                  }
-                : undefined
-            }
-          />
-        </Text>
-      </View> */}
-      {/* Controls and Stats */}
       <View className="px-4 py-6">
         {/* Tracking Button */}
-        <Button
-          onPress={() => router.push("/tracking")}
-          className="bg-green-600"
-        >
-          <Text className="text-primary-foreground">Start Tracking</Text>
-        </Button>
-
-        {/* Current Trip Stats */}
-        {isTracking && (
-          <Card className="p-4 mb-6">
-            <Text className="mb-4 text-lg font-bold">Current Trip</Text>
-            <View className="flex-row justify-between">
-              <View className="items-center">
-                <Clock className="mb-2" size={24} color="#6b7280" />
-                <Text className="text-2xl font-bold">{elapsedTime}m</Text>
-                <Text className="text-sm text-muted-foreground">Duration</Text>
-              </View>
-              <View className="items-center">
-                <Navigation2 className="mb-2" size={24} color="#6b7280" />
-                <Text className="text-2xl font-bold">
-                  {distance.toFixed(1)}km
-                </Text>
-                <Text className="text-sm text-muted-foreground">Distance</Text>
-              </View>
-            </View>
-          </Card>
+        {!isTracking ? (
+          <Button onPress={startTracking} className="bg-green-600">
+            <Text className="text-primary-foreground">Start Tracking</Text>
+          </Button>
+        ) : (
+          <Button onPress={stopTracking} className="bg-red-600">
+            <Text className="text-primary-foreground">Stop Tracking</Text>
+          </Button>
         )}
       </View>
       <View className="px-4 py-6 space-y-2">
@@ -118,7 +92,8 @@ export default function TabOneScreen() {
                     {trip.distance.toFixed(1)} km
                   </Text>
                   <Text className="text-muted-foreground">
-                    {Math.floor(trip.duration / 60)} min
+                    {Math.floor(trip.duration / 60)} min {trip.duration % 60}{" "}
+                    sec
                   </Text>
                 </View>
               </View>
